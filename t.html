@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#0A0A0C">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>往来账簿</title>
+<style>
+:root{--bg:#0A0A0C;--surf:#15171C;--surf2:#1C1F25;--ink:#F5F3EF;--ink2:#BDB8B1;--ink3:#8B867F;
+--line:rgba(255,255,255,.10);--line2:rgba(255,255,255,.055);--out:#FF7D68;--in:#63D6B6}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei UI",system-ui,sans-serif;
+font-variant-numeric:tabular-nums;padding:env(safe-area-inset-top) 0 calc(24px + env(safe-area-inset-bottom));
+background-image:radial-gradient(120% 60% at 80% -8%,rgba(255,125,104,.06),transparent 60%),radial-gradient(90% 55% at 5% 2%,rgba(99,214,182,.045),transparent 62%);background-attachment:fixed}
+.wrap{max-width:560px;margin:0 auto;padding:0 16px}
+header{position:sticky;top:0;z-index:9;background:rgba(10,10,12,.88);backdrop-filter:blur(12px);border-bottom:1px solid var(--line2)}
+header .in{max-width:560px;margin:0 auto;padding:11px 16px;display:flex;align-items:center;gap:10px}
+header .t{font-size:15px;letter-spacing:.02em}
+header .r{margin-left:auto;color:var(--ink3);font-size:11.5px}
+h2{font-size:12.5px;font-weight:500;letter-spacing:.12em;color:var(--ink3);margin:26px 0 10px}
+.big{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0 0}
+.card{background:var(--surf);border:1px solid var(--line2);border-radius:14px;padding:14px 15px}
+.card .k{font-size:12.5px;color:var(--ink2)}
+.card .v{font-size:24px;margin-top:5px;white-space:nowrap;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.card.o .v{color:var(--out)}.card.i .v{color:var(--in)}
+.card.wide{grid-column:1/-1;background:linear-gradient(180deg,var(--surf2),var(--surf))}
+.card.wide .v{font-size:34px;letter-spacing:-.02em}
+.card .s{font-size:11.5px;color:var(--ink3);margin-top:4px}
+.rows{border-top:1px solid var(--line2)}
+.row{display:flex;align-items:baseline;gap:10px;padding:11px 2px;border-bottom:1px solid var(--line2);font-size:14.5px}
+.row .l{color:var(--ink2);flex:0 0 auto}
+.row .m{color:var(--ink3);font-size:12px;margin-left:auto}
+.row .v{font-variant-numeric:tabular-nums;min-width:92px;text-align:right}
+.row .v.o{color:var(--out)}.row .v.i{color:var(--in)}.row .v.z{color:var(--ink3)}
+.hd{color:var(--ink3);font-size:11.5px;display:flex;gap:10px;padding:6px 2px}
+.hd span:first-child{flex:1}.hd .v{min-width:92px;text-align:right}
+button{font:inherit;color:var(--ink);background:var(--surf);border:1px solid var(--line);border-radius:12px;padding:12px 14px;width:100%;
+display:flex;align-items:center;justify-content:space-between;cursor:pointer}
+button .c{color:var(--ink3);font-size:12.5px}
+.det{display:none}.det.on{display:block}
+.note{color:var(--ink3);font-size:12px;line-height:1.8;margin-top:14px}
+.li{display:flex;gap:10px;padding:10px 2px;border-bottom:1px solid var(--line2);font-size:14px;align-items:baseline}
+.li .d{color:var(--ink3);font-size:12px;flex:0 0 84px}
+.li .n{min-width:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.li .a{min-width:88px;text-align:right;font-variant-numeric:tabular-nums}
+.li .a.o{color:var(--out)}.li .a.i{color:var(--in)}
+.li.rf{opacity:.45}.li.rf .a{text-decoration:line-through}
+/* 口令门 */
+#gate{max-width:400px;margin:0 auto;padding:22vh 20px 0;text-align:center}
+#gate h1{font-size:19px;font-weight:400;letter-spacing:.02em;margin:0 0 6px}
+#gate p{color:var(--ink3);font-size:12.5px;margin:0 0 22px;line-height:1.9}
+#pw{width:100%;font:inherit;font-size:16px;padding:13px 14px;border-radius:12px;border:1px solid var(--line);
+background:var(--surf);color:var(--ink);text-align:center;letter-spacing:.06em}
+#go{margin-top:12px;background:var(--ink);color:#0A0A0C;border:0;justify-content:center;font-weight:500;border-radius:12px}
+#msg{margin-top:14px;font-size:13px;color:var(--out);min-height:20px}
+#meter{height:2px;background:var(--line2);border-radius:2px;margin-top:16px;overflow:hidden}
+#meterI{height:100%;width:0;background:var(--ink3);transition:width .2s}
+.hide{display:none!important}
+</style>
+</head>
+<body>
+<div id="gate">
+  <h1>往来账簿</h1>
+  <p>输入口令查看<br>（口令只在你手机里算，不发送、不保存）</p>
+  <input id="pw" type="password" inputmode="text" autocomplete="current-password" placeholder="口令">
+  <button id="go">打开</button>
+  <div id="meter"><div id="meterI"></div></div>
+  <div id="msg" id2="msg"></div>
+  <div id="gateFoot" style="margin-top:26px;color:var(--ink3);font-size:11.5px;line-height:1.9"></div>
+</div>
+
+<div id="app" class="hide">
+  <header><div class="in"><span class="t">往来账簿</span><span class="r" id="cntTop"></span></div></header>
+  <div class="wrap">
+    <div class="big" id="big"></div>
+    <h2>按年</h2><div class="rows" id="years"></div>
+    <h2>按方式 / 类目</h2><div class="rows" id="ways"></div>
+    <h2>全部明细</h2>
+    <button id="fold"><span>展开</span><span class="c">日期 · 备注 · 金额</span></button>
+    <div class="det" id="det"></div>
+    <h2>她的近况</h2><div id="dossier"></div>
+    <div class="note" id="foot"></div>
+  </div>
+</div>
+
+<script id="pack" type="text/plain">{"v": 1, "kdf": "scrypt", "n": 32768, "r": 8, "p": 1, "salt": "o3pDjtskTCvZxELNA+FluA==", "nonce": "BLr5AXGkQkuOgvq0", "files": 10240, "hint": "测试包（假数据）", "created": "2026-10-09T12:00:00+08:00", "generated": "2026-10-09 11:29"}
+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</script>
+<script>"use strict";
+
+(function(root) {
+    const MAX_VALUE = 0x7fffffff;
+
+    // The SHA256 and PBKDF2 implementation are from scrypt-async-js:
+    // See: https://github.com/dchest/scrypt-async-js
+    function SHA256(m) {
+        const K = new Uint32Array([
+           0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b,
+           0x59f111f1, 0x923f82a4, 0xab1c5ed5, 0xd807aa98, 0x12835b01,
+           0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7,
+           0xc19bf174, 0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc,
+           0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da, 0x983e5152,
+           0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147,
+           0x06ca6351, 0x14292967, 0x27b70a85, 0x2e1b2138, 0x4d2c6dfc,
+           0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
+           0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819,
+           0xd6990624, 0xf40e3585, 0x106aa070, 0x19a4c116, 0x1e376c08,
+           0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f,
+           0x682e6ff3, 0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208,
+           0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
+       ]);
+
+        let h0 = 0x6a09e667, h1 = 0xbb67ae85, h2 = 0x3c6ef372, h3 = 0xa54ff53a;
+        let h4 = 0x510e527f, h5 = 0x9b05688c, h6 = 0x1f83d9ab, h7 = 0x5be0cd19;
+        const w = new Uint32Array(64);
+
+        function blocks(p) {
+            let off = 0, len = p.length;
+            while (len >= 64) {
+                let a = h0, b = h1, c = h2, d = h3, e = h4, f = h5, g = h6, h = h7, u, i, j, t1, t2;
+
+                for (i = 0; i < 16; i++) {
+                    j = off + i*4;
+                    w[i] = ((p[j] & 0xff)<<24) | ((p[j+1] & 0xff)<<16) |
+                    ((p[j+2] & 0xff)<<8) | (p[j+3] & 0xff);
+                }
+
+                for (i = 16; i < 64; i++) {
+                    u = w[i-2];
+                    t1 = ((u>>>17) | (u<<(32-17))) ^ ((u>>>19) | (u<<(32-19))) ^ (u>>>10);
+
+                    u = w[i-15];
+                    t2 = ((u>>>7) | (u<<(32-7))) ^ ((u>>>18) | (u<<(32-18))) ^ (u>>>3);
+
+                    w[i] = (((t1 + w[i-7]) | 0) + ((t2 + w[i-16]) | 0)) | 0;
+                }
+
+                for (i = 0; i < 64; i++) {
+                    t1 = ((((((e>>>6) | (e<<(32-6))) ^ ((e>>>11) | (e<<(32-11))) ^
+                             ((e>>>25) | (e<<(32-25)))) + ((e & f) ^ (~e & g))) | 0) +
+                          ((h + ((K[i] + w[i]) | 0)) | 0)) | 0;
+
+                    t2 = ((((a>>>2) | (a<<(32-2))) ^ ((a>>>13) | (a<<(32-13))) ^
+                           ((a>>>22) | (a<<(32-22)))) + ((a & b) ^ (a & c) ^ (b & c))) | 0;
+
+                    h = g;
+                    g = f;
+                    f = e;
+                    e = (d + t1) | 0;
+                    d = c;
+                    c = b;
+                    b = a;
+                    a = (t1 + t2) | 0;
+                }
+
+                h0 = (h0 + a) | 0;
+                h1 = (h1 + b) | 0;
+                h2 = (h2 + c) | 0;
+                h3 = (h3 + d) | 0;
+                h4 = (h4 + e) | 0;
+                h5 = (h5 + f) | 0;
+                h6 = (h6 + g) | 0;
+                h7 = (h7 + h) | 0;
+
+                off += 64;
+                len -= 64;
+            }
+        }
+
+        blocks(m);
+
+        let i, bytesLeft = m.length % 64,
+        bitLenHi = (m.length / 0x20000000) | 0,
+        bitLenLo = m.length << 3,
+        numZeros = (bytesLeft < 56) ? 56 : 120,
+        p = m.slice(m.length - bytesLeft, m.length);
+
+        p.push(0x80);
+        for (i = bytesLeft + 1; i < numZeros; i++) { p.push(0); }
+        p.push((bitLenHi >>> 24) & 0xff);
+        p.push((bitLenHi >>> 16) & 0xff);
+        p.push((bitLenHi >>> 8)  & 0xff);
+        p.push((bitLenHi >>> 0)  & 0xff);
+        p.push((bitLenLo >>> 24) & 0xff);
+        p.push((bitLenLo >>> 16) & 0xff);
+        p.push((bitLenLo >>> 8)  & 0xff);
+        p.push((bitLenLo >>> 0)  & 0xff);
+
+        blocks(p);
+
+        return [
+            (h0 >>> 24) & 0xff, (h0 >>> 16) & 0xff, (h0 >>> 8) & 0xff, (h0 >>> 0) & 0xff,
+            (h1 >>> 24) & 0xff, (h1 >>> 16) & 0xff, (h1 >>> 8) & 0xff, (h1 >>> 0) & 0xff,
+            (h2 >>> 24) & 0xff, (h2 >>> 16) & 0xff, (h2 >>> 8) & 0xff, (h2 >>> 0) & 0xff,
+            (h3 >>> 24) & 0xff, (h3 >>> 16) & 0xff, (h3 >>> 8) & 0xff, (h3 >>> 0) & 0xff,
+            (h4 >>> 24) & 0xff, (h4 >>> 16) & 0xff, (h4 >>> 8) & 0xff, (h4 >>> 0) & 0xff,
+            (h5 >>> 24) & 0xff, (h5 >>> 16) & 0xff, (h5 >>> 8) & 0xff, (h5 >>> 0) & 0xff,
+            (h6 >>> 24) & 0xff, (h6 >>> 16) & 0xff, (h6 >>> 8) & 0xff, (h6 >>> 0) & 0xff,
+            (h7 >>> 24) & 0xff, (h7 >>> 16) & 0xff, (h7 >>> 8) & 0xff, (h7 >>> 0) & 0xff
+        ];
+    }
+
+    function PBKDF2_HMAC_SHA256_OneIter(password, salt, dkLen) {
+        // compress password if it's longer than hash block length
+        password = (password.length <= 64) ? password : SHA256(password);
+
+        const innerLen = 64 + salt.length + 4;
+        const inner = new Array(innerLen);
+        const outerKey = new Array(64);
+
+        let i;
+        let dk = [];
+
+        // inner = (password ^ ipad) || salt || counter
+        for (i = 0; i < 64; i++) { inner[i] = 0x36; }
+        for (i = 0; i < password.length; i++) { inner[i] ^= password[i]; }
+        for (i = 0; i < salt.length; i++) { inner[64 + i] = salt[i]; }
+        for (i = innerLen - 4; i < innerLen; i++) { inner[i] = 0; }
+
+        // outerKey = password ^ opad
+        for (i = 0; i < 64; i++) outerKey[i] = 0x5c;
+        for (i = 0; i < password.length; i++) outerKey[i] ^= password[i];
+
+        // increments counter inside inner
+        function incrementCounter() {
+            for (let i = innerLen - 1; i >= innerLen - 4; i--) {
+                inner[i]++;
+                if (inner[i] <= 0xff) return;
+                inner[i] = 0;
+            }
+        }
+
+        // output blocks = SHA256(outerKey || SHA256(inner)) ...
+        while (dkLen >= 32) {
+            incrementCounter();
+            dk = dk.concat(SHA256(outerKey.concat(SHA256(inner))));
+            dkLen -= 32;
+        }
+        if (dkLen > 0) {
+            incrementCounter();
+            dk = dk.concat(SHA256(outerKey.concat(SHA256(inner))).slice(0, dkLen));
+        }
+
+        return dk;
+    }
+
+    // The following is an adaptation of scryptsy
+    // See: https://www.npmjs.com/package/scryptsy
+    function blockmix_salsa8(BY, Yi, r, x, _X) {
+        let i;
+
+        arraycopy(BY, (2 * r - 1) * 16, _X, 0, 16);
+        for (i = 0; i < 2 * r; i++) {
+            blockxor(BY, i * 16, _X, 16);
+            salsa20_8(_X, x);
+            arraycopy(_X, 0, BY, Yi + (i * 16), 16);
+        }
+
+        for (i = 0; i < r; i++) {
+            arraycopy(BY, Yi + (i * 2) * 16, BY, (i * 16), 16);
+        }
+
+        for (i = 0; i < r; i++) {
+            arraycopy(BY, Yi + (i * 2 + 1) * 16, BY, (i + r) * 16, 16);
+        }
+    }
+
+    function R(a, b) {
+        return (a << b) | (a >>> (32 - b));
+    }
+
+    function salsa20_8(B, x) {
+        arraycopy(B, 0, x, 0, 16);
+
+        for (let i = 8; i > 0; i -= 2) {
+            x[ 4] ^= R(x[ 0] + x[12], 7);
+            x[ 8] ^= R(x[ 4] + x[ 0], 9);
+            x[12] ^= R(x[ 8] + x[ 4], 13);
+            x[ 0] ^= R(x[12] + x[ 8], 18);
+            x[ 9] ^= R(x[ 5] + x[ 1], 7);
+            x[13] ^= R(x[ 9] + x[ 5], 9);
+            x[ 1] ^= R(x[13] + x[ 9], 13);
+            x[ 5] ^= R(x[ 1] + x[13], 18);
+            x[14] ^= R(x[10] + x[ 6], 7);
+            x[ 2] ^= R(x[14] + x[10], 9);
+            x[ 6] ^= R(x[ 2] + x[14], 13);
+            x[10] ^= R(x[ 6] + x[ 2], 18);
+            x[ 3] ^= R(x[15] + x[11], 7);
+            x[ 7] ^= R(x[ 3] + x[15], 9);
+            x[11] ^= R(x[ 7] + x[ 3], 13);
+            x[15] ^= R(x[11] + x[ 7], 18);
+            x[ 1] ^= R(x[ 0] + x[ 3], 7);
+            x[ 2] ^= R(x[ 1] + x[ 0], 9);
+            x[ 3] ^= R(x[ 2] + x[ 1], 13);
+            x[ 0] ^= R(x[ 3] + x[ 2], 18);
+            x[ 6] ^= R(x[ 5] + x[ 4], 7);
+            x[ 7] ^= R(x[ 6] + x[ 5], 9);
+            x[ 4] ^= R(x[ 7] + x[ 6], 13);
+            x[ 5] ^= R(x[ 4] + x[ 7], 18);
+            x[11] ^= R(x[10] + x[ 9], 7);
+            x[ 8] ^= R(x[11] + x[10], 9);
+            x[ 9] ^= R(x[ 8] + x[11], 13);
+            x[10] ^= R(x[ 9] + x[ 8], 18);
+            x[12] ^= R(x[15] + x[14], 7);
+            x[13] ^= R(x[12] + x[15], 9);
+            x[14] ^= R(x[13] + x[12], 13);
+            x[15] ^= R(x[14] + x[13], 18);
+        }
+
+        for (let i = 0; i < 16; ++i) {
+            B[i] += x[i];
+        }
+    }
+
+    // naive approach... going back to loop unrolling may yield additional performance
+    function blockxor(S, Si, D, len) {
+        for (let i = 0; i < len; i++) {
+            D[i] ^= S[Si + i]
+        }
+    }
+
+    function arraycopy(src, srcPos, dest, destPos, length) {
+        while (length--) {
+            dest[destPos++] = src[srcPos++];
+        }
+    }
+
+    function checkBufferish(o) {
+        if (!o || typeof(o.length) !== 'number') { return false; }
+
+        for (let i = 0; i < o.length; i++) {
+            const v = o[i];
+            if (typeof(v) !== 'number' || v % 1 || v < 0 || v >= 256) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    function ensureInteger(value, name) {
+        if (typeof(value) !== "number" || (value % 1)) { throw new Error('invalid ' + name); }
+        return value;
+    }
+
+    // N = Cpu cost, r = Memory cost, p = parallelization cost
+    // callback(error, progress, key)
+    function _scrypt(password, salt, N, r, p, dkLen, callback) {
+
+        N = ensureInteger(N, 'N');
+        r = ensureInteger(r, 'r');
+        p = ensureInteger(p, 'p');
+
+        dkLen = ensureInteger(dkLen, 'dkLen');
+
+        if (N === 0 || (N & (N - 1)) !== 0) { throw new Error('N must be power of 2'); }
+
+        if (N > MAX_VALUE / 128 / r) { throw new Error('N too large'); }
+        if (r > MAX_VALUE / 128 / p) { throw new Error('r too large'); }
+
+        if (!checkBufferish(password)) {
+            throw new Error('password must be an array or buffer');
+        }
+        password = Array.prototype.slice.call(password);
+
+        if (!checkBufferish(salt)) {
+            throw new Error('salt must be an array or buffer');
+        }
+        salt = Array.prototype.slice.call(salt);
+
+        let b = PBKDF2_HMAC_SHA256_OneIter(password, salt, p * 128 * r);
+        const B = new Uint32Array(p * 32 * r)
+        for (let i = 0; i < B.length; i++) {
+            const j = i * 4;
+            B[i] = ((b[j + 3] & 0xff) << 24) |
+                   ((b[j + 2] & 0xff) << 16) |
+                   ((b[j + 1] & 0xff) << 8) |
+                   ((b[j + 0] & 0xff) << 0);
+        }
+
+        const XY = new Uint32Array(64 * r);
+        const V = new Uint32Array(32 * r * N);
+
+        const Yi = 32 * r;
+
+        // scratch space
+        const x = new Uint32Array(16);       // salsa20_8
+        const _X = new Uint32Array(16);      // blockmix_salsa8
+
+        const totalOps = p * N * 2;
+        let currentOp = 0;
+        let lastPercent10 = null;
+
+        // Set this to true to abandon the scrypt on the next step
+        let stop = false;
+
+        // State information
+        let state = 0;
+        let i0 = 0, i1;
+        let Bi;
+
+        // How many blockmix_salsa8 can we do per step?
+        const limit = callback ? parseInt(1000 / r): 0xffffffff;
+
+        // Trick from scrypt-async; if there is a setImmediate shim in place, use it
+        const nextTick = (typeof(setImmediate) !== 'undefined') ? setImmediate : setTimeout;
+
+        // This is really all I changed; making scryptsy a state machine so we occasionally
+        // stop and give other evnts on the evnt loop a chance to run. ~RicMoo
+        const incrementalSMix = function() {
+            if (stop) {
+                return callback(new Error('cancelled'), currentOp / totalOps);
+            }
+
+            let steps;
+
+            switch (state) {
+                case 0:
+                    // for (var i = 0; i < p; i++)...
+                    Bi = i0 * 32 * r;
+
+                    arraycopy(B, Bi, XY, 0, Yi);                       // ROMix - 1
+
+                    state = 1;                                         // Move to ROMix 2
+                    i1 = 0;
+
+                    // Fall through
+
+                case 1:
+
+                    // Run up to 1000 steps of the first inner smix loop
+                    steps = N - i1;
+                    if (steps > limit) { steps = limit; }
+                    for (let i = 0; i < steps; i++) {                  // ROMix - 2
+                        arraycopy(XY, 0, V, (i1 + i) * Yi, Yi)         // ROMix - 3
+                        blockmix_salsa8(XY, Yi, r, x, _X);             // ROMix - 4
+                    }
+
+                    // for (var i = 0; i < N; i++)
+                    i1 += steps;
+                    currentOp += steps;
+
+                    if (callback) {
+                        // Call the callback with the progress (optionally stopping us)
+                        const percent10 = parseInt(1000 * currentOp / totalOps);
+                        if (percent10 !== lastPercent10) {
+                            stop = callback(null, currentOp / totalOps);
+                            if (stop) { break; }
+                            lastPercent10 = percent10;
+                        }
+                    }
+
+                    if (i1 < N) { break; }
+
+                    i1 = 0;                                          // Move to ROMix 6
+                    state = 2;
+
+                    // Fall through
+
+                case 2:
+
+                    // Run up to 1000 steps of the second inner smix loop
+                    steps = N - i1;
+                    if (steps > limit) { steps = limit; }
+                    for (let i = 0; i < steps; i++) {                // ROMix - 6
+                        const offset = (2 * r - 1) * 16;             // ROMix - 7
+                        const j = XY[offset] & (N - 1);
+                        blockxor(V, j * Yi, XY, Yi);                 // ROMix - 8 (inner)
+                        blockmix_salsa8(XY, Yi, r, x, _X);           // ROMix - 9 (outer)
+                    }
+
+                    // for (var i = 0; i < N; i++)...
+                    i1 += steps;
+                    currentOp += steps;
+
+                    // Call the callback with the progress (optionally stopping us)
+                    if (callback) {
+                        const percent10 = parseInt(1000 * currentOp / totalOps);
+                        if (percent10 !== lastPercent10) {
+                            stop = callback(null, currentOp / totalOps);
+                            if (stop) { break; }
+                            lastPercent10 = percent10;
+                        }
+                    }
+
+                    if (i1 < N) { break; }
+
+                    arraycopy(XY, 0, B, Bi, Yi);                     // ROMix - 10
+
+                    // for (var i = 0; i < p; i++)...
+                    i0++;
+                    if (i0 < p) {
+                        state = 0;
+                        break;
+                    }
+
+                    b = [];
+                    for (let i = 0; i < B.length; i++) {
+                        b.push((B[i] >>  0) & 0xff);
+                        b.push((B[i] >>  8) & 0xff);
+                        b.push((B[i] >> 16) & 0xff);
+                        b.push((B[i] >> 24) & 0xff);
+                    }
+
+                    const derivedKey = PBKDF2_HMAC_SHA256_OneIter(password, b, dkLen);
+
+                    // Send the result to the callback
+                    if (callback) { callback(null, 1.0, derivedKey); }
+
+                    // Done; don't break (which would reschedule)
+                    return derivedKey;
+            }
+
+            // Schedule the next steps
+            if (callback) { nextTick(incrementalSMix); }
+        }
+
+        // Run the smix state machine until completion
+        if (!callback) {
+            while (true) {
+                const derivedKey = incrementalSMix();
+                if (derivedKey != undefined) { return derivedKey; }
+            }
+        }
+
+        // Bootstrap the async incremental smix
+        incrementalSMix();
+    }
+
+    const lib = {
+        scrypt: function(password, salt, N, r, p, dkLen, progressCallback) {
+            return new Promise(function(resolve, reject) {
+                let lastProgress = 0;
+                if (progressCallback) { progressCallback(0); }
+                _scrypt(password, salt, N, r, p, dkLen, function(error, progress, key) {
+                    if (error) {
+                        reject(error);
+                    } else if (key) {
+                        if (progressCallback && lastProgress !== 1) {
+                            progressCallback(1);
+                        }
+                        resolve(new Uint8Array(key));
+                    } else if (progressCallback && progress !== lastProgress) {
+                        lastProgress = progress;
+                        return progressCallback(progress);
+                    }
+                });
+            });
+        },
+        syncScrypt: function(password, salt, N, r, p, dkLen) {
+            return new Uint8Array(_scrypt(password, salt, N, r, p, dkLen));
+        }
+    };
+
+    // node.js
+    if (typeof(exports) !== 'undefined') {
+       module.exports = lib;
+
+    // RequireJS/AMD
+    // http://www.requirejs.org/docs/api.html
+    // https://github.com/amdjs/amdjs-api/wiki/AMD
+    } else if (typeof(define) === 'function' && define.amd) {
+        define(lib);
+
+    // Web Browsers
+    } else if (root) {
+
+        // If there was an existing library "scrypt", make sure it is still available
+        if (root.scrypt) {
+            root._scrypt = root.scrypt;
+        }
+
+        root.scrypt = lib;
+    }
+
+})(this);
+</script>
+<script>
+const $ = id => document.getElementById(id);
+const b64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+const fmt = n => (n < 0 ? '−' : '') + Math.abs(n).toLocaleString('zh-CN', {minimumFractionDigits:2, maximumFractionDigits:2});
+const esc = s => String(s == null ? '' : s).replace(/[<>&"]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));
+const WAY = {wechat:'微信', alipay:'支付宝', bank:'银行卡', cash:'现金', other:'其它'};
+const PACK_TEXT = $('pack').textContent.trim();
+const r2 = n => Math.round(n * 100) / 100;
+
+async function decryptPack(packText, pw, onProgress){
+  const lines = packText.split('\n').map(s => s.trim()).filter(Boolean);
+  const H = JSON.parse(lines[0]);
+  const ct = b64(lines[1]);
+  if(!(window.crypto && crypto.subtle)) throw new Error('这个浏览器不支持本地解密，换 Chrome / Safari 最新版打开');
+  const keyBytes = await scrypt.scrypt(new TextEncoder().encode(pw), b64(H.salt), H.n, H.r, H.p, 32, onProgress);
+  const key = await crypto.subtle.importKey('raw', keyBytes, 'AES-GCM', false, ['decrypt']);
+  return new Uint8Array(await crypto.subtle.decrypt({name:'AES-GCM', iv: b64(H.nonce)}, key, ct));
+}
+function untar(u8){
+  const dec = new TextDecoder(), files = {}; let off = 0;
+  while(off + 512 <= u8.length){
+    const name = dec.decode(u8.subarray(off, off + 100)).replace(/\0.*$/, '').trim();
+    const size = parseInt(dec.decode(u8.subarray(off + 124, off + 136)).replace(/\0.*$/, '').trim(), 8) || 0;
+    if(name) files[name.replace(/^\.\//, '')] = u8.subarray(off + 512, off + 512 + size);
+    off += 512 + Math.ceil(size / 512) * 512;
+  }
+  return files;
+}
+
+function aggregate(rows){
+  rows.sort((a,b) => (a.date + (a.time||'')).localeCompare(b.date + (b.time||'')));
+  const live = rows.filter(r => !r.refunded), ref = rows.filter(r => r.refunded);
+  const S = a => r2(a.reduce((s,x) => s + x.amount, 0));
+  const O = S(live.filter(r => r.dir === 'out')), I = S(live.filter(r => r.dir === 'in'));
+  const byYear = {}, byWay = {};
+  live.forEach(r => {
+    const y = r.date.slice(0,4);
+    (byYear[y] = byYear[y] || {out:0,in:0,n:0})[r.dir] += r.amount; byYear[y].n++;
+    const w = r.method || WAY[r.channel] || '其它';
+    (byWay[w] = byWay[w] || {out:0,in:0,n:0})[r.dir] += r.amount; byWay[w].n++;
+  });
+  const grp = re => live.filter(r => re.test(r.note || ''));
+  const sums = a => ({n:a.length, out:r2(a.filter(r=>r.dir==='out').reduce((s,r)=>s+r.amount,0)), in:r2(a.filter(r=>r.dir==='in').reduce((s,r)=>s+r.amount,0))});
+  return {
+    out:O, inn:I, net:r2(O-I), n:rows.length,
+    nOut:live.filter(r=>r.dir==='out').length, nIn:live.filter(r=>r.dir==='in').length,
+    refN:ref.length, refSum:S(ref), d0:rows[0].date, d1:rows[rows.length-1].date,
+    byYear:Object.keys(byYear).sort().map(y=>({y, ...byYear[y], net:r2(byYear[y].out-byYear[y].in)})),
+    byWay:Object.keys(byWay).sort((a,b)=>(byWay[b].out+byWay[b].in)-(byWay[a].out+byWay[a].in)).map(w=>({w, ...byWay[w], net:r2(byWay[w].out-byWay[w].in)})),
+    hongbao:sums(grp(/红包|压岁|礼金|贺礼/)), birthday:sums(grp(/生日|寿|蛋糕/)),
+    records:rows.map(r=>({date:r.date, time:r.time||'', dir:r.dir, amount:r.amount, note:r.note||'', way:r.method||WAY[r.channel]||'', refunded:!!r.refunded}))
+  };
+}
+
+function draw(D, meta){
+  const netWord = D.net > 0 ? '我多给的' : D.net < 0 ? '她多给的' : '已经打平';
+  $('cntTop').textContent = D.n + ' 笔 · ' + D.d0.slice(0,7) + ' 起';
+  $('big').innerHTML =
+    '<div class="card wide"><div class="k">净额（' + netWord + '）</div><div class="v">¥ ' + fmt(Math.abs(D.net)) + '</div>'
+    + '<div class="s">我给她 − 她给我</div></div>'
+    + '<div class="card o"><div class="k">我给她</div><div class="v">' + fmt(D.out) + '</div><div class="s">' + D.nOut + ' 笔</div></div>'
+    + '<div class="card i"><div class="k">她给我</div><div class="v">' + fmt(D.inn) + '</div><div class="s">' + D.nIn + ' 笔</div></div>';
+  $('years').innerHTML = '<div class="hd"><span>年份</span><span class="v">我给她</span><span class="v">她给我</span><span class="v">净额</span></div>'
+    + D.byYear.map(y => '<div class="row"><span class="l">' + y.y + '</span><span class="m">' + y.n + ' 笔</span>'
+      + '<span class="v o">' + fmt(y.out) + '</span><span class="v i">' + fmt(y.in) + '</span>'
+      + '<span class="v ' + (y.net > 0 ? 'o' : y.net < 0 ? 'i' : 'z') + '">' + fmt(y.net) + '</span></div>').join('');
+  const g1 = D.hongbao.n ? '<div class="row"><span class="l">红包 / 礼金</span><span class="m">' + D.hongbao.n + ' 笔</span><span class="v o">' + fmt(D.hongbao.out) + '</span><span class="v i">' + fmt(D.hongbao.in) + '</span></div>' : '';
+  const g2 = D.birthday.n ? '<div class="row"><span class="l">生日相关</span><span class="m">' + D.birthday.n + ' 笔</span><span class="v o">' + fmt(D.birthday.out) + '</span><span class="v i">' + fmt(D.birthday.in) + '</span></div>' : '';
+  $('ways').innerHTML = D.byWay.map(w => '<div class="row"><span class="l">' + esc(w.w) + '</span><span class="m">' + w.n + ' 笔</span><span class="v o">' + fmt(w.out) + '</span><span class="v i">' + fmt(w.in) + '</span></div>').join('') + g1 + g2;
+  $('det').innerHTML = '<div class="li" style="border-bottom-color:var(--line)"><span class="d">日期</span><span class="n">备注</span><span class="a">金额</span></div>'
+    + D.records.slice().reverse().map(r => '<div class="li' + (r.refunded ? ' rf' : '') + '">'
+      + '<span class="d">' + r.date.slice(2) + (r.time ? ' ' + r.time.slice(0,5) : '') + '</span>'
+      + '<span class="n">' + esc(r.note || r.way || '—') + (r.refunded ? '（已退还）' : '') + '</span>'
+      + '<span class="a ' + (r.dir === 'out' ? 'o' : 'i') + '">' + (r.dir === 'out' ? '给 ' : '收 ') + fmt(r.amount) + '</span></div>').join('');
+  $('fold').firstChild.textContent = '展开 ' + D.n + ' 笔';
+  $('foot').innerHTML = (D.refN ? '另有 ' + D.refN + ' 笔已退还 ¥' + fmt(D.refSum) + '，未计入上面三个数。<br>' : '')
+    + '数据范围 ' + D.d0 + ' ~ ' + D.d1 + ' · 金额单位 元<br>'
+    + '本页只有密文，口令在你这台设备上运算，不发送、不保存<br>生成于 ' + esc(meta.generated || '');
+}
+
+let INITED = false;
+
+/* ---------- 她的近况（档案 + 三号属地轴，来自容器里的 alicia_dossier.json） ---------- */
+const SEG = {douyin:'抖音 · 公开号', douyin_priv:'抖音 · 私密号', xhs:'小红书'};
+const hm = s => String(s || '').replace('T', ' ').slice(5, 16);
+const blk = (title, inner) => inner ? '<h2>' + title + '</h2><div class="rows">' + inner + '</div>' : '';
+
+function renderDossier(d){
+  const box = $('dossier');
+  if(!d){ box.innerHTML = '<div class="note" style="margin-top:0">容器里还没有档案数据（跑一次 relock 会带上）。</div>'; return; }
+  const c = d.content || {}, st = d.stats || {};
+  let h = '<div class="note" style="margin-top:0">档案打包于 <b>' + esc(d.generated || '') + '</b>'
+        + '（要最新的，在电脑上跑一次 relock 刷新）<br>'
+        + '观测窗口 ' + esc(st.window || '—') + ' · 采样 ' + esc(st.samples || 0) + ' 次</div>';
+
+  // 三源现状
+  h += '<h2>三个号现在</h2><div class="rows">'
+    + '<div class="hd"><span>号</span><span class="v">属地</span><span class="v">已持续</span></div>'
+    + (d.accounts || []).map(a =>
+        '<div class="row"><span class="l">' + esc(a.name) + '</span><span class="m">自 ' + esc(hm(a.since)) + '</span>'
+        + '<span class="v">' + esc(a.ip || '抓取失败') + '</span><span class="v z">' + esc(a.held || '') + '</span></div>').join('')
+    + '</div>';
+
+  // 行程（属地分段）
+  let seg = '';
+  Object.keys(d.segments || {}).forEach(col => {
+    seg += '<div class="hd"><span>' + esc(SEG[col] || col) + '</span><span class="v">起</span><span class="v">止</span></div>';
+    (d.segments[col] || []).forEach(s => {
+      seg += '<div class="row"><span class="l">' + esc(s.v || '抓取失败') + '</span><span class="m"></span>'
+           + '<span class="v z">' + esc(hm(s.from)) + '</span>'
+           + '<span class="v z">' + esc(s.to ? hm(s.to) : '至今') + '</span></div>';
+    });
+  });
+  h += blk('行程（观测到的属地区间）', seg);
+
+  // 内容指纹
+  const cnt = '<div class="row"><span class="l">公开号</span><span class="m">宇宙全糖</span>'
+    + '<span class="v z">作品 ' + esc(c.pub_works || '—') + '</span><span class="v z">粉 ' + esc(c.pub_fans) + ' · 关 ' + esc(c.pub_following) + '</span></div>'
+    + '<div class="row"><span class="l">私密号</span><span class="m">桂花落</span>'
+    + '<span class="v z">' + esc(c.priv_tok || '—') + '</span><span class="v z">粉 ' + esc(c.priv_fans) + ' · 关 ' + esc(c.priv_following) + '</span></div>'
+    + '<div class="row"><span class="l">小红书</span><span class="m">' + esc(c.xhs_last_ok || '') + '</span>'
+    + '<span class="v">' + esc(c.xhs_ip || '—') + '</span><span class="v z">笔记 ' + esc(c.xhs_notes || '—') + '</span></div>';
+  h += blk('内容指纹', cnt);
+
+  // 时间轴（最近 14 条）
+  let tl = '';
+  (d.timeline || []).slice().reverse().slice(0, 14).forEach(e => {
+    tl += '<div class="li"><span class="d">' + esc((e.t || '').replace('T', ' ').slice(5, 16)) + '</span>'
+        + '<span class="n" style="white-space:normal">' + esc(e.text || '') + '</span></div>';
+  });
+  if(tl) h += '<h2>时间轴（最近 14 条）</h2><div class="rows">' + tl + '</div>';
+
+  // 档案要点
+  let fx = '';
+  (d.facts || []).forEach(f => {
+    fx += '<div class="li"><span class="d">' + esc(f.k || '') + '</span><span class="n" style="white-space:normal">' + esc(f.v || '') + '</span></div>';
+  });
+  if(fx) h += '<h2>人物档案</h2><div class="rows">' + fx + '</div>';
+
+  // 我的读法 + 观察点
+  let rd = '';
+  (d.reading || []).forEach(r => { rd += '<div class="li"><span class="n" style="white-space:normal">' + esc(r) + '</span></div>'; });
+  if(d.verdict) rd += '<div class="li"><span class="n" style="white-space:normal"><b>结论：' + esc(d.verdict) + '</b></span></div>';
+  (d.watch || []).forEach(w => { rd += '<div class="li"><span class="n" style="white-space:normal">观察点 · ' + esc(w) + '</span></div>'; });
+  if(rd) h += '<h2>我的读法</h2><div class="rows">' + rd + '</div>';
+
+  // 口径
+  const cv = (d.caveats || []).map(x => esc(x)).join('<br>');
+  if(cv) h += '<div class="note">口径与陷阱：<br>' + cv + '</div>';
+
+  box.innerHTML = h;
+}
+
+$('go').onclick = async () => {
+  const pw = $('pw').value; if(!pw) return;
+  $('msg').textContent = ''; $('go').textContent = '解密中…'; $('meterI').style.width = '0%';
+  try {
+    const tar = await decryptPack(PACK_TEXT, pw, p => { $('meterI').style.width = Math.round(p*100) + '%'; });
+    const meta = JSON.parse(PACK_TEXT.split('\n')[0]);
+    meta.generated = new Date().toLocaleString('zh-CN', {hour12:false});
+    const files = untar(tar);
+    const jl = files['alicia_ledger.jsonl'];
+    if(!jl) throw new Error('容器里没有账簿数据');
+    const rows = new TextDecoder().decode(jl).trim().split('\n').filter(Boolean).map(l => JSON.parse(l));
+    draw(aggregate(rows), meta);
+    let dz = null;
+    try { const dj = files['alicia_dossier.json']; if(dj) dz = JSON.parse(new TextDecoder().decode(dj)); } catch(e){}
+    renderDossier(dz);
+    $('gate').classList.add('hide'); $('app').classList.remove('hide');
+    window.scrollTo(0,0);
+    if(!INITED){ INITED = true;
+      $('fold').onclick = () => { const d = $('det'); d.classList.toggle('on');
+        $('fold').firstChild.textContent = (d.classList.contains('on') ? '收起 ' : '展开 ') + rows.length + ' 笔'; };
+    }
+  } catch(e) {
+    $('meterI').style.width = '0%'; $('go').textContent = '打开';
+    const nm = String((e && e.name) || ''), ms = String((e && e.message) || '');
+    const wrong = /OperationError|InvalidAccess|crypto|subtle|decrypt|operation/i.test(nm + ' ' + ms);
+    $('msg').textContent = wrong ? '口令不对，再试一次。' : ('打不开：' + (ms || nm || e));
+  }
+};
+$('pw').addEventListener('keydown', e => { if(e.key === 'Enter') $('go').click(); });
+(function(){
+  try { const H = JSON.parse(PACK_TEXT.split('\n')[0]);
+    $('gateFoot').innerHTML = '加密：scrypt(N=' + (H.n||'?') + ') + AES-256-GCM，页面里只有密文'
+      + (H.hint ? '<br>口令提示：' + esc(H.hint) : '');
+  } catch(e){}
+})();
+</script>
+</body>
+</html>
